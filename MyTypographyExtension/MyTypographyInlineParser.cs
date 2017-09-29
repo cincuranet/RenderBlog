@@ -22,17 +22,34 @@ namespace MyTypographyExtension
 			switch (c)
 			{
 				case SingleQuote:
-					processor.Inline = new HtmlInline() { Tag = "&rsquo;" };
-					slice.Start += 1;
-					return true;
-				case Dot:
-					if (slice.NextChar() == Dot && slice.NextChar() == Dot)
 					{
 						slice.Start += 1;
-						processor.Inline = new HtmlInline() { Tag = "&hellip;" };
+						processor.Inline = new HtmlInline() { Tag = "&rsquo;" };
 						return true;
 					}
-					break;
+				case DoubleQuote:
+					{
+						var nextChar = slice.NextChar();
+						if (nextChar.IsWhiteSpaceOrZero())
+						{
+							processor.Inline = new HtmlInline() { Tag = "&rdquo;" };
+						}
+						else
+						{
+							processor.Inline = new HtmlInline() { Tag = "&ldquo;" };
+						}
+						return true;
+					}
+				case Dot:
+					{
+						if (slice.NextChar() == Dot && slice.NextChar() == Dot)
+						{
+							slice.Start += 1;
+							processor.Inline = new HtmlInline() { Tag = "&hellip;" };
+							return true;
+						}
+						break;
+					}
 			}
 			return false;
 		}
