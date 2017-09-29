@@ -38,8 +38,8 @@
     <Reference Include="DotLiquid, Version=2.0.145.0, Culture=neutral, PublicKeyToken=82e46016ecf9f07c, processorArchitecture=MSIL">
       <HintPath>..\packages\DotLiquid.2.0.145\lib\net45\DotLiquid.dll</HintPath>
     </Reference>
-    <Reference Include="Markdig, Version=0.12.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Markdig.0.12.3\lib\net40\Markdig.dll</HintPath>
+    <Reference Include="Markdig, Version=0.13.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Markdig.0.13.3\lib\net40\Markdig.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -65,9 +65,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CustomSmartyPants\CustomSmartyPants.csproj">
-      <Project>{A9D28F6D-FFDB-403F-BA6B-CFA6C8306FB1}</Project>
-      <Name>CustomSmartyPants</Name>
+    <ProjectReference Include="..\MyTypographyExtension\MyTypographyExtension.csproj">
+      <Project>{bb1624bc-52a0-42c0-af1a-5b738ea3148e}</Project>
+      <Name>MyTypographyExtension</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

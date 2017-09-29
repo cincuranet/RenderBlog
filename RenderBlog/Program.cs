@@ -4,14 +4,13 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using CustomSmartyPants;
 using DotLiquid;
 using DotLiquid.FileSystems;
 using Markdig;
+using MyTypographyExtension;
 using Newtonsoft.Json;
 using SharpYaml.Serialization;
 
@@ -303,7 +302,8 @@ namespace RenderBlog
 		{
 			var pipeline = new MarkdownPipelineBuilder()
 				.UseEmojiAndSmiley()
-				.UseCustomSmartyPants()
+				.UsePipeTables()
+				.UseMyTypography()
 				.Build();
 			return Markdown.ToHtml(content, pipeline);
 		}
