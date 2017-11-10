@@ -130,19 +130,6 @@ namespace RenderBlog
 					Tags = (List<string>)x.pageVariables[TagsKey],
 				})
 				.ToArray();
-			var tagsWithPosts = new Dictionary<string, List<Dictionary<string, object>>>();
-			foreach (var post in postsWithTags)
-			{
-				foreach (var tag in post.Tags)
-				{
-					if (!tagsWithPosts.ContainsKey(tag))
-					{
-						tagsWithPosts.Add(tag, new List<Dictionary<string, object>>());
-					}
-					tagsWithPosts[tag].Add(post.Post.pageVariables);
-				}
-			}
-			siteConfiguration.Add("tags_posts", tagsWithPosts);
 			siteConfiguration.Add(TagsKey, postsWithTags.SelectMany(x => x.Tags).Distinct().ToList());
 			siteConfiguration.Add("years", posts.Select(x => (DateTime)x.pageVariables[DateKey]).Select(x => x.Year).OrderByDescending(x => x).Distinct().ToList());
 			var postsWithYears = postsSorted
