@@ -4,19 +4,21 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using DotLiquid;
 using DotLiquid.FileSystems;
 using Markdig;
-using MyTypographyExtension;
+using Markdig.Syntax;
+using Markdig.Syntax.Inlines;
 using Newtonsoft.Json;
 using SharpYaml.Serialization;
 
 namespace RenderBlog
 {
-	class Program
+	public class Program
 	{
 		const int BufferSize = 32 * 1024;
 		const string FrontMatterSeparator = "---";
@@ -34,9 +36,11 @@ namespace RenderBlog
 		const string TitleKey = "title";
 		const string IdKey = "id";
 
-		static void Main(string[] args)
+		static readonly CultureInfo DefaultCulture = new CultureInfo("en-US");
+
+		public static void Main(string[] args)
 		{
-			CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("en-US");
+			CultureInfo.DefaultThreadCurrentCulture = DefaultCulture;
 
 			var sitePath = args[0];
 			var outputFolder = args[1];
@@ -103,7 +107,7 @@ namespace RenderBlog
 					}
 					if (frontMatter.ContainsKey(TitleKey))
 					{
-						frontMatter[TitleKey] = Regex.Replace(RenderMarkdown((string)frontMatter[TitleKey]), @"<p>(.*)</p>\s*", "$1");
+						frontMatter[TitleKey] = Regex.Replace(MarkdownRenderer.RenderMarkdown((string)frontMatter[TitleKey]), @"<p>(.*)</p>\s*", "$1");
 					}
 					var url = Path.GetExtension(localPath).Equals(HtmlExtension, StringComparison.Ordinal)
 						? Path.ChangeExtension(localPath, null)
@@ -170,7 +174,7 @@ namespace RenderBlog
 				var pageContent = RenderLiquid(item.content, variables);
 				if (item.isMarkdown)
 				{
-					pageContent = RenderMarkdown(pageContent);
+					pageContent = MarkdownRenderer.RenderMarkdown(pageContent);
 				}
 				item.pageVariables["content"] = pageContent;
 				item.pageVariables["excerpt"] = pageContent.Split(new[] { (string)siteConfiguration["excerpt_separator"] }, StringSplitOptions.None).First();
@@ -186,7 +190,7 @@ namespace RenderBlog
 				var pageContent = RenderLiquid(item.content, variables);
 				if (item.isMarkdown)
 				{
-					pageContent = RenderMarkdown(pageContent);
+					pageContent = MarkdownRenderer.RenderMarkdown(pageContent);
 				}
 				item.pageVariables["content"] = pageContent;
 				item.pageVariables["excerpt"] = pageContent.Split(new[] { (string)siteConfiguration["excerpt_separator"] }, StringSplitOptions.None).First();
@@ -285,16 +289,6 @@ namespace RenderBlog
 			}
 		}
 
-		static string RenderMarkdown(string content)
-		{
-			var pipeline = new MarkdownPipelineBuilder()
-				.UseEmojiAndSmiley()
-				.UsePipeTables()
-				.UseMyTypography()
-				.Build();
-			return Markdown.ToHtml(content, pipeline);
-		}
-
 		static string RenderLiquid(string content, Dictionary<string, object> variables)
 		{
 			var template = Template.Parse(content);
@@ -305,10 +299,10 @@ namespace RenderBlog
 			}
 			try
 			{
-				return template.Render(new RenderParameters()
+				return template.Render(new RenderParameters(DefaultCulture)
 				{
 					LocalVariables = Hash.FromDictionary(variables),
-					RethrowErrors = true,
+					ErrorsOutputMode = ErrorsOutputMode.Rethrow,
 				});
 			}
 			catch (Exception ex)
@@ -391,6 +385,37 @@ namespace RenderBlog
 			return result;
 		}
 
+		public static class MarkdownRenderer
+		{
+			public static string RenderMarkdown(string content)
+			{
+				var builder = new MarkdownPipelineBuilder()
+					.UseEmojiAndSmiley()
+					.UsePipeTables();
+				builder.DocumentProcessed += PostRenderMarkdown;
+				var pipeline = builder.Build();
+				return Markdown.ToHtml(content, pipeline);
+			}
+
+			static void PostRenderMarkdown(MarkdownDocument document)
+			{
+				foreach (var item in document.Descendants())
+				{
+					if (!(item is LiteralInline inline))
+						continue;
+					var newText = inline.ToString();
+					newText = newText.Replace("'", "’");
+					newText = newText.Replace("...", "…");
+					newText = newText.Replace(" - ", " – ");
+					newText = Regex.Replace(newText, @"""\b", "“");
+					newText = Regex.Replace(newText, @"^""", "“");
+					newText = Regex.Replace(newText, @"\b""", "”");
+					newText = Regex.Replace(newText, @"""$", "”");
+					inline.ReplaceBy(new LiteralInline(newText), true);
+				}
+			}
+		}
+
 		class BlogFileSystem : IFileSystem
 		{
 			readonly string _includes;
@@ -413,6 +438,7 @@ namespace RenderBlog
 				return JsonConvert.SerializeObject(input);
 			}
 
+			// escape
 			public static string Encode(string input)
 			{
 				// this is lame, but it's already partially encoded from MD's smarty pants and I want to keep it
