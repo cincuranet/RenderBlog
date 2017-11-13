@@ -401,8 +401,10 @@ namespace RenderBlog
 			{
 				foreach (var item in document.Descendants())
 				{
-					if (!(item is LiteralInline inline))
+					if (item.GetType() != typeof(LiteralInline))
 						continue;
+
+					var inline = (LiteralInline)item;
 					var newText = inline.ToString();
 					newText = newText.Replace("'", "’");
 					newText = newText.Replace("...", "…");
