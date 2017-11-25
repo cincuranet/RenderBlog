@@ -79,11 +79,11 @@ namespace RenderBlog
 			var postsPath = Path.Combine(sitePath, PostsFolder);
 			var files = EnumerateFiles(sitePath).Concat(EnumerateFiles(postsPath))
 				.Select(LoadFile)
-				.ToArray();
+				.ToList();
 
 			var frontMatterFiles = files
 				.Where(x => x.frontMatter != null)
-				.ToArray();
+				.ToList();
 			var filesParsing = frontMatterFiles.AsParallel()
 				.Select(f =>
 				{
@@ -122,18 +122,19 @@ namespace RenderBlog
 					frontMatter.Add("url", url);
 					return (localPath: localPath, pageVariables: frontMatter, content: f.content, isMarkdown: isMarkdown, isPost: isPost);
 				})
-				.ToArray();
-			var posts = filesParsing.Where(x => x.isPost).ToArray();
+				.ToList();
+			var posts = filesParsing.Where(x => x.isPost).ToList();
+			var noPosts = filesParsing.Where(x => !x.isPost).ToList();
 			var postsSorted = posts.OrderByDescending(x => x.pageVariables[DateKey]).ThenByDescending(x => x.localPath);
 			siteConfiguration.Add("posts", postsSorted.Select(x => x.pageVariables).ToList());
-			siteConfiguration.Add("html_pages", filesParsing.Where(x => !x.isPost).Where(x => Path.GetExtension(x.localPath).Equals(HtmlExtension, StringComparison.Ordinal)).OrderBy(x => x.localPath).Select(x => x.pageVariables).ToList());
+			siteConfiguration.Add("html_pages", noPosts.Where(x => Path.GetExtension(x.localPath).Equals(HtmlExtension, StringComparison.Ordinal)).OrderBy(x => x.localPath).Select(x => x.pageVariables).ToList());
 			var postsWithTags = postsSorted
 				.Select(x => new
 				{
 					Post = x,
 					Tags = (List<string>)x.pageVariables[TagsKey],
 				})
-				.ToArray();
+				.ToList();
 			siteConfiguration.Add(TagsKey, postsWithTags.SelectMany(x => x.Tags).Distinct().ToList());
 			siteConfiguration.Add("years", posts.Select(x => (DateTime)x.pageVariables[DateKey]).Select(x => x.Year).OrderByDescending(x => x).Distinct().ToList());
 			var postsWithYears = postsSorted
@@ -142,7 +143,7 @@ namespace RenderBlog
 					Post = x,
 					Year = ((DateTime)x.pageVariables[DateKey]).Year,
 				})
-				.ToArray();
+				.ToList();
 			var yearsWithPosts = new Dictionary<int, List<Dictionary<string, object>>>();
 			foreach (var post in postsWithYears)
 			{
@@ -163,7 +164,7 @@ namespace RenderBlog
 
 			Console.Write("Pre-render:\t");
 
-			filesParsing.Where(x => x.isPost).AsParallel().ForAll(item =>
+			posts.AsParallel().ForAll(item =>
 			{
 				var variables = new Dictionary<string, object>()
 				{
@@ -179,7 +180,7 @@ namespace RenderBlog
 				item.pageVariables["content"] = pageContent;
 				item.pageVariables["excerpt"] = pageContent.Split(new[] { (string)siteConfiguration["excerpt_separator"] }, StringSplitOptions.None).First();
 			});
-			filesParsing.Where(x => !x.isPost).AsParallel().ForAll(item =>
+			noPosts.AsParallel().ForAll(item =>
 			{
 				var variables = new Dictionary<string, object>()
 				{
