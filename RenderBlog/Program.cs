@@ -274,20 +274,10 @@ namespace RenderBlog
 			return int.Parse(m.Groups[1].Value);
 		}
 
-		static object EnsureDirectoryExistsLock = new object();
 		static void EnsureDirectoryExists(string file)
 		{
 			var dir = Path.GetDirectoryName(file);
-			if (!Directory.Exists(dir))
-			{
-				lock (EnsureDirectoryExistsLock)
-				{
-					if (!Directory.Exists(dir))
-					{
-						Directory.CreateDirectory(dir);
-					}
-				}
-			}
+			Directory.CreateDirectory(dir);
 		}
 
 		static string RenderLiquid(string content, Dictionary<string, object> variables)
