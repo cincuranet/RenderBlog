@@ -117,7 +117,7 @@ namespace RenderBlog
 						? url.Substring(0, Math.Max(url.Length - (IndexFile.Length + 1), 0))
 						: url;
 					url = url != string.Empty
-						? $"{UrlSeparator}{url}{UrlSeparator}"
+						? $"{UrlSeparator}{url}"
 						: $"{UrlSeparator}";
 					frontMatter.Add("url", url);
 					return (localPath: localPath, pageVariables: frontMatter, content: f.content, isMarkdown: isMarkdown, isPost: isPost);
