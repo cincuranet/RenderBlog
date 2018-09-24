@@ -382,6 +382,7 @@ namespace RenderBlog
 			{
 				var builder = new MarkdownPipelineBuilder()
 					.UseEmojiAndSmiley()
+					.UseEmphasisExtras()
 					.UsePipeTables();
 				builder.DocumentProcessed += PostRenderMarkdown;
 				var pipeline = builder.Build();
