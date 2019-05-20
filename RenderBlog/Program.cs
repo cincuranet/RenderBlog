@@ -11,6 +11,8 @@ using System.Text.RegularExpressions;
 using DotLiquid;
 using DotLiquid.FileSystems;
 using Markdig;
+using Markdig.Renderers;
+using Markdig.Renderers.Html;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 using Newtonsoft.Json;
@@ -386,7 +388,15 @@ namespace RenderBlog
 					.UsePipeTables();
 				builder.DocumentProcessed += PostRenderMarkdown;
 				var pipeline = builder.Build();
-				return Markdown.ToHtml(content, pipeline);
+				using (var sw = new StringWriter())
+				{
+					var html = new HtmlRenderer(sw);
+					html.ObjectRenderers.AddIfNotAlready<RawInlineRenderer>();
+					Markdown.Convert(content, html, pipeline);
+					sw.Flush();
+					return sw.ToString();
+
+				}
 			}
 
 			static void PostRenderMarkdown(MarkdownDocument document)
@@ -405,7 +415,26 @@ namespace RenderBlog
 					newText = Regex.Replace(newText, @"^""", "“");
 					newText = Regex.Replace(newText, @"\b""", "”");
 					newText = Regex.Replace(newText, @"""$", "”");
-					inline.ReplaceBy(new LiteralInline(newText), true);
+					inline.ReplaceBy(new RawInline(newText), true);
+				}
+			}
+
+			class RawInline : LeafInline
+			{
+				public string Text { get; }
+
+				public RawInline(string text)
+				{
+					Text = text;
+				}
+
+			}
+
+			class RawInlineRenderer : HtmlObjectRenderer<RawInline>
+			{
+				protected override void Write(HtmlRenderer renderer, RawInline obj)
+				{
+					renderer.Write(obj.Text);
 				}
 			}
 		}
