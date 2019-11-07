@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -15,7 +14,6 @@ using Markdig.Renderers;
 using Markdig.Renderers.Html;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
-using Newtonsoft.Json;
 using SharpYaml.Serialization;
 
 namespace RenderBlog
@@ -456,11 +454,6 @@ namespace RenderBlog
 
 		static class BlogFilters
 		{
-			public static string Jsonify(object input)
-			{
-				return JsonConvert.SerializeObject(input);
-			}
-
 			// escape
 			public static string Encode(string input)
 			{

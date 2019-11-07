@@ -1,4 +1,5 @@
-﻿using NUnitLite;
+﻿using System.Reflection;
+using NUnitLite;
 
 namespace Tests
 {
@@ -6,7 +7,7 @@ namespace Tests
 	{
 		static int Main(string[] args)
 		{
-			return new AutoRun().Execute(new[] { "--noresult" });
+			return new AutoRun(Assembly.GetExecutingAssembly()).Execute(new[] { "--noresult" });
 		}
 	}
 }
