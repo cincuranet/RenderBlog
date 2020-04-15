@@ -401,19 +401,31 @@ namespace RenderBlog
 			{
 				foreach (var item in document.Descendants())
 				{
-					if (item.GetType() != typeof(LiteralInline))
-						continue;
-
-					var inline = (LiteralInline)item;
-					var newText = inline.ToString();
-					newText = newText.Replace("'", "’");
-					newText = newText.Replace("...", "…");
-					newText = newText.Replace(" - ", " – ");
-					newText = Regex.Replace(newText, @"""\b", "“");
-					newText = Regex.Replace(newText, @"^""", "“");
-					newText = Regex.Replace(newText, @"\b""", "”");
-					newText = Regex.Replace(newText, @"""$", "”");
-					inline.ReplaceBy(new RawInline(newText), true);
+					switch (item)
+					{
+						case LiteralInline inline:
+							{
+								var newText = inline.ToString();
+								newText = newText.Replace("'", "’");
+								newText = newText.Replace("...", "…");
+								newText = newText.Replace(" - ", " – ");
+								newText = Regex.Replace(newText, @"""\b", "“");
+								newText = Regex.Replace(newText, @"^""", "“");
+								newText = Regex.Replace(newText, @"\b""", "”");
+								newText = Regex.Replace(newText, @"""$", "”");
+								inline.ReplaceBy(new RawInline(newText), true);
+								break;
+							}
+						case HtmlInline inline:
+							{
+								var tag = inline.Tag;
+								tag = Regex.Replace(tag, @"<(T[a-zA-Z0-9]*)>", "&lt;$1&gt;");
+								inline.ReplaceBy(new RawInline(tag), true);
+								break;
+							}
+						default:
+							continue;
+					}
 				}
 			}
 

@@ -24,6 +24,9 @@ namespace Tests
 Test [foo][1]
 
 [1]: http://example.com", ExpectedResult = "<h1>h1</h1>\n<p>Test <a href=\"http://example.com\">foo</a></p>")]
+		[TestCase("test<T>", ExpectedResult = "<p>test&lt;T&gt;</p>")]
+		[TestCase("test<TValue>", ExpectedResult = "<p>test&lt;TValue&gt;</p>")]
+		[TestCase("test<foo>", ExpectedResult = "<p>test<foo></p>")]
 		public string Test(string input)
 		{
 			var result = RenderBlog.Program.MarkdownRenderer.RenderMarkdown(input);
