@@ -107,7 +107,7 @@ namespace RenderBlog
 					}
 					if (frontMatter.ContainsKey(TitleKey))
 					{
-						frontMatter[TitleKey] = Regex.Replace(MarkdownRenderer.RenderMarkdown((string)frontMatter[TitleKey]), @"<p>(.*)</p>\s*", "$1");
+						frontMatter[TitleKey] = BetterTypography((string)frontMatter[TitleKey]);
 					}
 					var url = Path.GetExtension(localPath).Equals(HtmlExtension, StringComparison.Ordinal)
 						? Path.ChangeExtension(localPath, null)
@@ -386,6 +386,18 @@ namespace RenderBlog
 			return (int)Math.Ceiling(time);
 		}
 
+		static string BetterTypography(string s)
+		{
+			s = s.Replace("'", "’");
+			s = s.Replace("...", "…");
+			s = s.Replace(" - ", " – ");
+			s = Regex.Replace(s, @"""\b", "“");
+			s = Regex.Replace(s, @"^""", "“");
+			s = Regex.Replace(s, @"\b""", "”");
+			s = Regex.Replace(s, @"""$", "”");
+			return s;
+		}
+
 		public static class MarkdownRenderer
 		{
 			public static string RenderMarkdown(string content)
@@ -416,14 +428,7 @@ namespace RenderBlog
 						case LiteralInline inline:
 							{
 								var newText = inline.ToString();
-								newText = newText.Replace("'", "’");
-								newText = newText.Replace("...", "…");
-								newText = newText.Replace(" - ", " – ");
-								newText = Regex.Replace(newText, @"""\b", "“");
-								newText = Regex.Replace(newText, @"^""", "“");
-								newText = Regex.Replace(newText, @"\b""", "”");
-								newText = Regex.Replace(newText, @"""$", "”");
-								inline.ReplaceBy(new RawInline(newText), true);
+								inline.ReplaceBy(new RawInline(BetterTypography(newText)), true);
 								break;
 							}
 						case HtmlInline inline:
@@ -475,7 +480,15 @@ namespace RenderBlog
 		}
 
 		static class BlogFilters
-		{ }
+		{
+			public static string Encode(string s)
+			{
+				s = s.Replace("&", "&amp;");
+				s = s.Replace("<", "&lt;");
+				s = s.Replace(">", "&gt;");
+				return s;
+			}
+		}
 
 		class BlogFileHashFactory : ITagFactory
 		{
