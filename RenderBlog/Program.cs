@@ -296,7 +296,7 @@ namespace RenderBlog
 				blogFunctions.Import("escape", new Func<string, string>(Escape));
 				blogFunctions.Import("dt_string", new Func<DateTime, string, string>(DateTimeString));
 				templateContext.BuiltinObject.SetValue("blog", blogFunctions, true);
-				templateContext.TemplateLoader = new BlogFileSystem(Path.Combine(sitePath, IncludesFolder));
+				templateContext.TemplateLoader = new BlogTemplateLoader(Path.Combine(sitePath, IncludesFolder));
 				templateContext.PushCulture(DefaultCulture);
 				return template.Render(templateContext);
 			}
@@ -500,11 +500,11 @@ namespace RenderBlog
 			}
 		}
 
-		class BlogFileSystem : ITemplateLoader
+		class BlogTemplateLoader : ITemplateLoader
 		{
 			readonly string _includes;
 
-			public BlogFileSystem(string includes)
+			public BlogTemplateLoader(string includes)
 			{
 				_includes = includes;
 			}
