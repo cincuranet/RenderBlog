@@ -4,8 +4,8 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="DotLiquid" Version="2.0.314" />
     <PackageReference Include="Markdig" Version="0.18.0" />
+    <PackageReference Include="Scriban" Version="2.1.2" />
     <PackageReference Include="SharpYaml" Version="1.6.6" />
   </ItemGroup>
 </Project>

@@ -7,13 +7,14 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using DotLiquid;
-using DotLiquid.FileSystems;
+using System.Threading.Tasks;
 using Markdig;
 using Markdig.Renderers;
 using Markdig.Renderers.Html;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
+using Scriban;
+using Scriban.Runtime;
 using SharpYaml.Serialization;
 
 namespace RenderBlog
@@ -47,10 +48,6 @@ namespace RenderBlog
 
 			var siteConfiguration = ParseFrontMatter(File.ReadAllText(Path.Combine(sitePath, ConfigFile)));
 			siteConfiguration.Add("time", DateTime.UtcNow);
-
-			Template.FileSystem = new BlogFileSystem(Path.Combine(sitePath, IncludesFolder));
-			Template.RegisterFilter(typeof(BlogFilters));
-			Template.RegisterTagFactory(new BlogFileHashFactory(sitePath));
 
 			var watch = Stopwatch.StartNew();
 
@@ -145,16 +142,18 @@ namespace RenderBlog
 					Year = ((DateTime)x.pageVariables[DateKey]).Year,
 				})
 				.ToList();
-			var yearsWithPosts = new Dictionary<int, List<Dictionary<string, object>>>();
+			var yearsWithPosts = new Dictionary<string, List<Dictionary<string, object>>>();
 			foreach (var post in postsWithYears)
 			{
-				if (!yearsWithPosts.ContainsKey(post.Year))
+				var year = post.Year.ToString();
+				if (!yearsWithPosts.ContainsKey(year))
 				{
-					yearsWithPosts.Add(post.Year, new List<Dictionary<string, object>>());
+					yearsWithPosts.Add(year, new List<Dictionary<string, object>>());
 				}
-				yearsWithPosts[post.Year].Add(post.Post.pageVariables);
+				yearsWithPosts[year].Add(post.Post.pageVariables);
 			}
 			siteConfiguration.Add("years_posts", yearsWithPosts);
+			siteConfiguration.Add("posts_by_id", posts.ToDictionary(x => x.pageVariables[IdKey].ToString(), x => x.pageVariables));
 
 			Console.WriteLine(watch.Elapsed);
 			watch.Restart();
@@ -173,7 +172,7 @@ namespace RenderBlog
 					{ "page", item.pageVariables },
 				};
 
-				var pageContent = RenderLiquid(item.content, variables);
+				var pageContent = Render(item.content, variables, sitePath);
 				if (item.isMarkdown)
 				{
 					pageContent = MarkdownRenderer.RenderMarkdown(pageContent);
@@ -189,7 +188,7 @@ namespace RenderBlog
 					{ "page", item.pageVariables },
 				};
 
-				var pageContent = RenderLiquid(item.content, variables);
+				var pageContent = Render(item.content, variables, sitePath);
 				if (item.isMarkdown)
 				{
 					pageContent = MarkdownRenderer.RenderMarkdown(pageContent);
@@ -229,7 +228,7 @@ namespace RenderBlog
 
 					var currentLayout = layouts[layout];
 					variables["content"] = pageContent;
-					pageContent = RenderLiquid(currentLayout.content, variables);
+					pageContent = Render(currentLayout.content, variables, sitePath);
 
 					currentFrontMatter = ParseFrontMatter(currentLayout.frontMatter);
 
@@ -281,25 +280,62 @@ namespace RenderBlog
 			Directory.CreateDirectory(dir);
 		}
 
-		static string RenderLiquid(string content, Dictionary<string, object> variables)
+		static string Render(string content, Dictionary<string, object> variables, string sitePath)
 		{
 			var template = Template.Parse(content);
-			template.MakeThreadSafe();
-			if (template.Errors.Any())
+			if (template.HasErrors)
 			{
-				throw new BlogException(string.Join(Environment.NewLine, template.Errors.Select(x => x.ToString())));
+				throw new BlogException(string.Join(Environment.NewLine, template.Messages));
 			}
 			try
 			{
-				return template.Render(new RenderParameters(DefaultCulture)
-				{
-					LocalVariables = Hash.FromDictionary(variables),
-					ErrorsOutputMode = ErrorsOutputMode.Rethrow,
-				});
+				var templateContext = new TemplateContext();
+				templateContext.BuiltinObject.Import(variables);
+				var blogFunctions = new ScriptObject();
+				blogFunctions.Import("file_hash", new Func<string, string>(FileHash));
+				blogFunctions.Import("escape", new Func<string, string>(Escape));
+				blogFunctions.Import("dt_string", new Func<DateTime, string, string>(DateTimeString));
+				templateContext.BuiltinObject.SetValue("blog", blogFunctions, true);
+				templateContext.TemplateLoader = new BlogFileSystem(Path.Combine(sitePath, IncludesFolder));
+				templateContext.PushCulture(DefaultCulture);
+				return template.Render(templateContext);
 			}
 			catch (Exception ex)
 			{
 				throw new BlogException(ex.Message, ex);
+			}
+
+			string FileHash(string filename)
+			{
+				var path = Path.Combine(sitePath, filename.TrimStart(UrlSeparator).Replace(UrlSeparator, Path.DirectorySeparatorChar));
+				return Hash(path);
+
+				static string Hash(string filename)
+				{
+					if (!File.Exists(filename))
+						return string.Empty;
+					using (var hash = HashAlgorithm.Create("SHA1"))
+					{
+						using (var fs = File.OpenRead(filename))
+						{
+							var hashBytes = hash.ComputeHash(fs);
+							return BitConverter.ToString(hashBytes).Replace("-", string.Empty).ToLowerInvariant();
+						}
+					}
+				}
+			}
+
+			static string Escape(string s)
+			{
+				return s
+					.Replace("&", "&amp;")
+					.Replace("<", "&lt;")
+					.Replace(">", "&gt;");
+			}
+
+			static string DateTimeString(DateTime dt, string format)
+			{
+				return dt.ToString(format);
 			}
 		}
 
@@ -383,7 +419,7 @@ namespace RenderBlog
 			var time = words / 180.0;
 			if (time < 1)
 				time = 1;
-			return (int)Math.Ceiling(time);
+			return (int)Math.Round(time);
 		}
 
 		static string BetterTypography(string s)
@@ -464,7 +500,7 @@ namespace RenderBlog
 			}
 		}
 
-		class BlogFileSystem : IFileSystem
+		class BlogFileSystem : ITemplateLoader
 		{
 			readonly string _includes;
 
@@ -473,75 +509,19 @@ namespace RenderBlog
 				_includes = includes;
 			}
 
-			public string ReadTemplateFile(Context context, string templateName)
+			public string GetPath(TemplateContext context, Scriban.Parsing.SourceSpan callerSpan, string templateName)
 			{
-				return File.ReadAllText(Path.Combine(_includes, templateName));
-			}
-		}
-
-		static class BlogFilters
-		{
-			public static string Encode(string s)
-			{
-				s = s.Replace("&", "&amp;");
-				s = s.Replace("<", "&lt;");
-				s = s.Replace(">", "&gt;");
-				return s;
-			}
-		}
-
-		class BlogFileHashFactory : ITagFactory
-		{
-			public string TagName => "file_hash";
-
-			readonly string _sitePath;
-
-			public BlogFileHashFactory(string sitePath)
-			{
-				_sitePath = sitePath;
+				return Path.Combine(_includes, templateName);
 			}
 
-			public Tag Create()
+			public string Load(TemplateContext context, Scriban.Parsing.SourceSpan callerSpan, string templatePath)
 			{
-				return new BlogFileHash(_sitePath);
-			}
-		}
-		class BlogFileHash : Tag
-		{
-			readonly string _sitePath;
-
-			string _filename;
-
-			public BlogFileHash(string sitePath)
-			{
-				_sitePath = sitePath;
+				return File.ReadAllText(templatePath);
 			}
 
-			public override void Initialize(string tagName, string markup, List<string> tokens)
+			public async ValueTask<string> LoadAsync(TemplateContext context, Scriban.Parsing.SourceSpan callerSpan, string templatePath)
 			{
-				base.Initialize(tagName, markup, tokens);
-				_filename = markup.Trim();
-			}
-
-			public override void Render(Context context, TextWriter result)
-			{
-				base.Render(context, result);
-				var path = Path.Combine(_sitePath, _filename.TrimStart(UrlSeparator).Replace(UrlSeparator, Path.DirectorySeparatorChar));
-				result.Write(Hash(path));
-			}
-
-			static string Hash(string filename)
-			{
-				if (!File.Exists(filename))
-					return string.Empty;
-				using (var hash = HashAlgorithm.Create("SHA1"))
-				{
-					using (var fs = File.OpenRead(filename))
-					{
-						var hashBytes = hash.ComputeHash(fs);
-						return BitConverter.ToString(hashBytes).Replace("-", string.Empty).ToLowerInvariant();
-					}
-				}
+				return await File.ReadAllTextAsync(templatePath);
 			}
 		}
 
