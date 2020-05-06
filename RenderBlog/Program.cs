@@ -120,6 +120,7 @@ namespace RenderBlog
 						? $"{UrlSeparator}{url}"
 						: $"{UrlSeparator}";
 					frontMatter.Add("url", url);
+					frontMatter.Add("TTR", TimeToRead(f.content));
 					return (localPath: localPath, pageVariables: frontMatter, content: f.content, isMarkdown: isMarkdown, isPost: isPost);
 				})
 				.ToList();
@@ -376,6 +377,15 @@ namespace RenderBlog
 			return result;
 		}
 
+		static int TimeToRead(string text)
+		{
+			var words = Regex.Matches(text, @"\w+").Count;
+			var time = words / 180.0;
+			if (time < 1)
+				time = 1;
+			return (int)Math.Ceiling(time);
+		}
+
 		public static class MarkdownRenderer
 		{
 			public static string RenderMarkdown(string content)
@@ -465,17 +475,7 @@ namespace RenderBlog
 		}
 
 		static class BlogFilters
-		{
-			// escape
-			public static string Encode(string input)
-			{
-				// this is lame, but it's already partially encoded from MD's smarty pants and I want to keep it
-				// so far it's mostly generics breaking the stuff
-				return input
-					.Replace("<", "&lt;")
-					.Replace(">", "&gt;");
-			}
-		}
+		{ }
 
 		class BlogFileHashFactory : ITagFactory
 		{
