@@ -294,6 +294,7 @@ namespace RenderBlog
 				var blogFunctions = new ScriptObject();
 				blogFunctions.Import("file_hash", new Func<string, string>(FileHash));
 				blogFunctions.Import("escape", new Func<string, string>(Escape));
+				blogFunctions.Import("escape_list", new Func<IEnumerable<string>, IEnumerable<string>>(EscapeList));
 				blogFunctions.Import("dt_string", new Func<DateTime, string, string>(DateTimeString));
 				templateContext.BuiltinObject.SetValue("blog", blogFunctions, true);
 				templateContext.TemplateLoader = new BlogTemplateLoader(Path.Combine(sitePath, IncludesFolder));
@@ -325,6 +326,7 @@ namespace RenderBlog
 				}
 			}
 
+			static IEnumerable<string> EscapeList(IEnumerable<string> ss) => ss.Select(Escape);
 			static string Escape(string s)
 			{
 				return s
