@@ -110,7 +110,7 @@ namespace RenderBlog
 						? Path.ChangeExtension(localPath, null)
 						: localPath;
 					url = url.Replace(Path.DirectorySeparatorChar, UrlSeparator);
-					url = url.EndsWith(IndexFile, StringComparison.Ordinal)
+					url = url.Equals(IndexFile, StringComparison.Ordinal) || url.EndsWith($"{UrlSeparator}{IndexFile}", StringComparison.Ordinal)
 						? url.Substring(0, Math.Max(url.Length - (IndexFile.Length + 1), 0))
 						: url;
 					url = url != string.Empty
