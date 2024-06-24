@@ -291,6 +291,7 @@ namespace RenderBlog
 			{
 				var templateContext = new TemplateContext();
 				templateContext.BuiltinObject.Import(variables);
+				templateContext.LoopLimit = 0;
 				var blogFunctions = new ScriptObject();
 				blogFunctions.Import("file_hash", new Func<string, string>(FileHash));
 				blogFunctions.Import("escape", new Func<string, string>(Escape));
