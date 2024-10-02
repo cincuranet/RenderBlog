@@ -49,11 +49,7 @@ namespace RenderBlog
 			var siteConfiguration = ParseFrontMatter(File.ReadAllText(Path.Combine(sitePath, ConfigFile)));
 			siteConfiguration.Add("time", DateTime.UtcNow);
 
-			var watch = Stopwatch.StartNew();
-
 			#region Layouts loading
-
-			Console.Write("Layouts:\t");
 
 			var layouts = new Dictionary<string, (string path, string frontMatter, string content)>();
 			var baseLayoutPath = Path.Combine(sitePath, LayoutsFolder, BaseLayout);
@@ -64,14 +60,9 @@ namespace RenderBlog
 				layouts.Add(key, item);
 			}
 
-			Console.WriteLine(watch.Elapsed);
-			watch.Restart();
-
 			#endregion
 
 			#region Parsing
-
-			Console.Write("Parsing:\t");
 
 			var postsPath = Path.Combine(sitePath, PostsFolder);
 			var files = EnumerateFiles(sitePath).Concat(EnumerateFiles(postsPath))
@@ -155,14 +146,9 @@ namespace RenderBlog
 			siteConfiguration.Add("years_posts", yearsWithPosts);
 			siteConfiguration.Add("posts_by_id", posts.ToDictionary(x => x.pageVariables[IdKey].ToString(), x => x.pageVariables));
 
-			Console.WriteLine(watch.Elapsed);
-			watch.Restart();
-
 			#endregion
 
 			#region Local pre-rendering
-
-			Console.Write("Pre-render:\t");
 
 			posts.AsParallel().ForAll(item =>
 			{
@@ -197,14 +183,9 @@ namespace RenderBlog
 				item.pageVariables["excerpt"] = pageContent.Split(new[] { (string)siteConfiguration["excerpt_separator"] }, StringSplitOptions.None).First();
 			});
 
-			Console.WriteLine(watch.Elapsed);
-			watch.Restart();
-
 			#endregion
 
 			#region Full rendering
-
-			Console.Write("Render:\t\t");
 
 			filesParsing.AsParallel().ForAll(item =>
 			{
@@ -241,14 +222,9 @@ namespace RenderBlog
 				File.WriteAllText(fileSystemPath, pageContent, new UTF8Encoding(false));
 			});
 
-			Console.WriteLine(watch.Elapsed);
-			watch.Restart();
-
 			#endregion
 
 			#region Copy static files
-
-			Console.Write("Statics:\t");
 
 			foreach (var item in files.Where(x => x.frontMatter == null))
 			{
@@ -258,12 +234,7 @@ namespace RenderBlog
 				File.Copy(item.path, fileSystemPath, true);
 			}
 
-			Console.WriteLine(watch.Elapsed);
-			watch.Restart();
-
 			#endregion
-
-			Console.WriteLine("Done");
 		}
 
 		static int? GetPostId(string filename)
