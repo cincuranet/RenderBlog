@@ -287,12 +287,12 @@ namespace RenderBlog
 				{
 					if (!File.Exists(filename))
 						return string.Empty;
-					using (var hash = HashAlgorithm.Create("SHA1"))
+					using (var hash = SHA1.Create())
 					{
 						using (var fs = File.OpenRead(filename))
 						{
 							var hashBytes = hash.ComputeHash(fs);
-							return BitConverter.ToString(hashBytes).Replace("-", string.Empty).ToLowerInvariant();
+							return Convert.ToHexString(hashBytes).ToLowerInvariant();
 						}
 					}
 				}
