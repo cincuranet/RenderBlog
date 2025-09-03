@@ -269,7 +269,7 @@ namespace RenderBlog
 				blogFunctions.Import("escape_list", new Func<IEnumerable<string>, IEnumerable<string>>(EscapeList));
 				blogFunctions.Import("dt_string", new Func<DateTime, string, string>(DateTimeString));
 				templateContext.BuiltinObject.SetValue("blog", blogFunctions, true);
-				templateContext.TemplateLoader = new BlogTemplateLoader(Path.Combine(sitePath, IncludesFolder));
+				templateContext.TemplateLoader = new BlogTemplateLoader(sitePath, IncludesFolder);
 				templateContext.PushCulture(DefaultCulture);
 				return template.Render(templateContext);
 			}
@@ -476,16 +476,25 @@ namespace RenderBlog
 
 		class BlogTemplateLoader : ITemplateLoader
 		{
+			readonly string _sitePath;
 			readonly string _includes;
 
-			public BlogTemplateLoader(string includes)
+			public BlogTemplateLoader(string sitePath, string includes)
 			{
+				_sitePath = sitePath;
 				_includes = includes;
 			}
 
 			public string GetPath(TemplateContext context, Scriban.Parsing.SourceSpan callerSpan, string templateName)
 			{
-				return Path.Combine(_includes, templateName);
+				if (templateName.StartsWith(UrlSeparator))
+				{
+					return Path.Combine(_sitePath, templateName.TrimStart(UrlSeparator).Replace(UrlSeparator, Path.DirectorySeparatorChar));
+				}
+				else
+				{
+					return Path.Combine(_sitePath, _includes, templateName);
+				}
 			}
 
 			public string Load(TemplateContext context, Scriban.Parsing.SourceSpan callerSpan, string templatePath)
