@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="RenderBlog/RenderBlog.csproj" />
+  <Project Path="Tests/Tests.csproj" />
+</Solution>
