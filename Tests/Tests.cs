@@ -30,8 +30,8 @@ Test [foo][1]
 		public string Test(string input)
 		{
 			var result = RenderBlog.Program.MarkdownRenderer.RenderMarkdown(input);
-			TestContext.WriteLine(result);
-			return result.Remove(result.Length - 1, 1);
+			TestContext.Out.WriteLine(result);
+			return result[..^1];
 		}
 	}
 }
