@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -425,12 +424,40 @@ namespace RenderBlog
         [GeneratedRegex("\"")]
         static partial Regex DoubleQuotesRegex { get; }
 
+        static string Smileys(string s)
+        {
+            s = s.Replace(@":-)", "🙂");
+            s = s.Replace(@":)", "🙂");
+
+            s = s.Replace(@":-D", "😀");
+            s = s.Replace(@":D", "😀");
+
+            s = s.Replace(@":-P", "😛");
+            s = s.Replace(@":P", "😛");
+
+            s = s.Replace(@":-\", "😕");
+            s = s.Replace(@":/", "😕");
+
+            s = s.Replace(@";-)", "😉");
+            s = s.Replace(@";)", "😉");
+
+            s = s.Replace(@"8-)", "😎");
+            s = s.Replace(@"8)", "😎");
+
+            s = s.Replace(@":-(", "☹️");
+            s = s.Replace(@":(", "☹️");
+
+            s = s.Replace(@":|", "😐");
+
+            s = s.Replace(@":o", "😮");
+            return s;
+        }
+
         public static partial class MarkdownRenderer
         {
             public static string RenderMarkdown(string content)
             {
                 var builder = new MarkdownPipelineBuilder()
-                    .UseEmojiAndSmiley()
                     .UseEmphasisExtras()
                     .UsePipeTables();
                 builder.DocumentProcessed += PostRenderMarkdown;
@@ -455,7 +482,9 @@ namespace RenderBlog
                         case LiteralInline inline:
                             {
                                 var newText = inline.ToString();
-                                inline.ReplaceBy(new RawInline(BetterTypography(newText)), true);
+                                newText = BetterTypography(newText);
+                                newText = Smileys(newText);
+                                inline.ReplaceBy(new RawInline(newText), true);
                                 break;
                             }
                         case HtmlInline inline:
