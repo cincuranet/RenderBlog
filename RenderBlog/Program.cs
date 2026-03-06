@@ -165,7 +165,7 @@ namespace RenderBlog
                     pageContent = MarkdownRenderer.RenderMarkdown(pageContent);
                 }
                 item.pageVariables["content"] = pageContent;
-                item.pageVariables["excerpt"] = pageContent.Split([(string)siteConfiguration["excerpt_separator"]], StringSplitOptions.None).First();
+                item.pageVariables["excerpt"] = pageContent.Split([(string)siteConfiguration["excerpt_separator"]], StringSplitOptions.None).First().Trim();
             });
             noPosts.AsParallel().ForAll(item =>
             {
