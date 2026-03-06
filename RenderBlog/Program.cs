@@ -50,7 +50,7 @@ namespace RenderBlog
 
             #region Layouts loading
 
-            var layouts = new Dictionary<string, (string path, string frontMatter, string content)>();
+            var layouts = new Dictionary<string, (string path, string frontMatter, string content)>(StringComparer.Ordinal);
             var baseLayoutPath = Path.Combine(sitePath, LayoutsFolder, BaseLayout);
             layouts.Add(Path.GetFileNameWithoutExtension(BaseLayout), (baseLayoutPath, string.Empty, File.ReadAllText(baseLayoutPath)));
             foreach (var item in Directory.EnumerateFiles(Path.Combine(sitePath, LayoutsFolder)).Select(LoadFile).Where(x => x.frontMatter != null))
@@ -107,7 +107,8 @@ namespace RenderBlog
                         ? $"{UrlSeparator}{url}"
                         : $"{UrlSeparator}";
                     frontMatter.Add("url", url);
-                    frontMatter.Add("TTR", TimeToRead(f.content));
+                    frontMatter.Add("ttr", TimeToRead(f.content));
+                    frontMatter.Add("is_post", isPost);
                     return (localPath: localPath, pageVariables: frontMatter, content: f.content, isMarkdown: isMarkdown, isPost: isPost);
                 })
                 .ToList();
@@ -132,7 +133,7 @@ namespace RenderBlog
                     Year = ((DateTime)x.pageVariables[DateKey]).Year,
                 })
                 .ToList();
-            var yearsWithPosts = new Dictionary<string, List<Dictionary<string, object>>>();
+            var yearsWithPosts = new Dictionary<string, List<Dictionary<string, object>>>(StringComparer.Ordinal);
             foreach (var post in postsWithYears)
             {
                 var year = post.Year.ToString();
@@ -144,7 +145,7 @@ namespace RenderBlog
                 value.Add(post.Post.pageVariables);
             }
             siteConfiguration.Add("years_posts", yearsWithPosts);
-            siteConfiguration.Add("posts_by_id", posts.ToDictionary(x => x.pageVariables[IdKey].ToString(), x => x.pageVariables));
+            siteConfiguration.Add("posts_by_id", posts.ToDictionary(x => x.pageVariables[IdKey].ToString(), x => x.pageVariables, StringComparer.Ordinal));
 
             #endregion
 
@@ -152,7 +153,7 @@ namespace RenderBlog
 
             posts.AsParallel().ForAll(item =>
             {
-                var variables = new Dictionary<string, object>()
+                var variables = new Dictionary<string, object>(StringComparer.Ordinal)
                 {
                     { "site", siteConfiguration },
                     { "page", item.pageVariables },
@@ -168,7 +169,7 @@ namespace RenderBlog
             });
             noPosts.AsParallel().ForAll(item =>
             {
-                var variables = new Dictionary<string, object>()
+                var variables = new Dictionary<string, object>(StringComparer.Ordinal)
                 {
                     { "site", siteConfiguration },
                     { "page", item.pageVariables },
@@ -180,7 +181,6 @@ namespace RenderBlog
                     pageContent = MarkdownRenderer.RenderMarkdown(pageContent);
                 }
                 item.pageVariables["content"] = pageContent;
-                item.pageVariables["excerpt"] = pageContent.Split([(string)siteConfiguration["excerpt_separator"]], StringSplitOptions.None).First();
             });
 
             #endregion
@@ -189,7 +189,7 @@ namespace RenderBlog
 
             filesParsing.AsParallel().ForAll(item =>
             {
-                var variables = new Dictionary<string, object>()
+                var variables = new Dictionary<string, object>(StringComparer.Ordinal)
                 {
                     { "site", siteConfiguration },
                     { "page", item.pageVariables },
@@ -367,7 +367,7 @@ namespace RenderBlog
 
         static Dictionary<string, object> RepackDictionary(Dictionary<object, object> dictionary)
         {
-            var result = new Dictionary<string, object>();
+            var result = new Dictionary<string, object>(StringComparer.Ordinal);
             foreach (var item in dictionary)
             {
                 var key = (string)item.Key;
