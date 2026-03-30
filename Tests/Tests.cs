@@ -30,7 +30,11 @@ Test [foo][1]
         [TestCase("test `:)` aa `'`", ExpectedResult = "<p>test <code>:)</code> aa <code>'</code></p>")]
         [TestCase(":)", ExpectedResult = "<p>🙂</p>")]
         [TestCase("'", ExpectedResult = "<p>’</p>")]
-        [TestCase("b:)a", ExpectedResult = "<p>b🙂a</p>")]
+        [TestCase("b:)a", ExpectedResult = "<p>b:)a</p>")]
+        [TestCase("b :)a", ExpectedResult = "<p>b 🙂a</p>")]
+        [TestCase("b :-)a", ExpectedResult = "<p>b 🙂a</p>")]
+        [TestCase("foo 2008)", ExpectedResult = "<p>foo 2008)</p>")]
+        [TestCase("foo 200 8)", ExpectedResult = "<p>foo 200 😎</p>")]
         public string Test(string input)
         {
             var result = RenderBlog.Program.MarkdownRenderer.RenderMarkdown(input);

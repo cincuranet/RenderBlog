@@ -426,30 +426,16 @@ namespace RenderBlog
 
         static string Smileys(string s)
         {
-            s = s.Replace(@":-)", "🙂");
-            s = s.Replace(@":)", "🙂");
-
-            s = s.Replace(@":-D", "😀");
-            s = s.Replace(@":D", "😀");
-
-            s = s.Replace(@":-P", "😛");
-            s = s.Replace(@":P", "😛");
-
-            s = s.Replace(@":-\", "😕");
-            s = s.Replace(@":/", "😕");
-
-            s = s.Replace(@";-)", "😉");
-            s = s.Replace(@";)", "😉");
-
-            s = s.Replace(@"8-)", "😎");
-            s = s.Replace(@"8)", "😎");
-
-            s = s.Replace(@":-(", "☹️");
-            s = s.Replace(@":(", "☹️");
-
-            s = s.Replace(@":|", "😐");
-
-            s = s.Replace(@":o", "😮");
+            s = Regex.Replace(s, @"(?<!\w):-?\)", "🙂");
+            s = Regex.Replace(s, @"(?<!\w):-?D", "😀");
+            s = Regex.Replace(s, @"(?<!\w):-?P", "😛");
+            s = Regex.Replace(s, @"(?<!\w);-?\)", "😉");
+            s = Regex.Replace(s, @"(?<!\w):-?\(", "☹️");
+            s = Regex.Replace(s, @"(?<!\w)8-?\)", "😎");
+            s = Regex.Replace(s, @"(?<!\w):-\\", "😕");
+            s = Regex.Replace(s, @"(?<!\w):/", "😕");
+            s = Regex.Replace(s, @"(?<!\w):\|", "😐");
+            s = Regex.Replace(s, @"(?<!\w):o", "😮");
             return s;
         }
 
