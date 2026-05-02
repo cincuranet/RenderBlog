@@ -445,6 +445,7 @@ namespace RenderBlog
             {
                 var builder = new MarkdownPipelineBuilder()
                     .UseEmphasisExtras()
+                    .UseAutoIdentifiers()
                     .UsePipeTables();
                 builder.DocumentProcessed += PostRenderMarkdown;
                 var pipeline = builder.Build();
@@ -455,7 +456,6 @@ namespace RenderBlog
                     Markdown.Convert(content, html, pipeline);
                     sw.Flush();
                     return sw.ToString();
-
                 }
             }
 

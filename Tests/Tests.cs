@@ -20,10 +20,10 @@ namespace Tests
         [TestCase("foo - bar", ExpectedResult = "<p>foo – bar</p>")]
         [TestCase("`hello' test`", ExpectedResult = "<p><code>hello' test</code></p>")]
         [TestCase("```\nhello' test", ExpectedResult = "<pre><code>hello' test\n</code></pre>")]
-        [TestCase(@"# h1
-Test [foo][1]
+        [TestCase(@"# Some heading
+Test [foo][1] [bar][Some heading]
 
-[1]: http://example.com", ExpectedResult = "<h1>h1</h1>\n<p>Test <a href=\"http://example.com\">foo</a></p>")]
+[1]: http://example.com", ExpectedResult = "<h1 id=\"some-heading\">Some heading</h1>\n<p>Test <a href=\"http://example.com\">foo</a> <a href=\"#some-heading\">bar</a></p>")]
         [TestCase("test<T>", ExpectedResult = "<p>test&lt;T&gt;</p>")]
         [TestCase("test<TValue>", ExpectedResult = "<p>test&lt;TValue&gt;</p>")]
         [TestCase("test<foo>", ExpectedResult = "<p>test<foo></p>")]
