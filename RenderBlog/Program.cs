@@ -470,7 +470,7 @@ namespace RenderBlog
                                 var newText = inline.ToString();
                                 newText = BetterTypography(newText);
                                 newText = Smileys(newText);
-                                inline.ReplaceBy(new RawInline(newText), true);
+                                inline.ReplaceBy(new LiteralInline(newText), true);
                                 break;
                             }
                         case HtmlInline inline:
