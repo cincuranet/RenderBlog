@@ -268,7 +268,6 @@ namespace RenderBlog
                 templateContext.LoopLimit = 0;
                 var blogFunctions = new ScriptObject();
                 blogFunctions.Import("file_hash", new Func<string, string>(FileHash));
-                blogFunctions.Import("file_base64", new Func<string, string>(FileBase64));
                 blogFunctions.Import("escape", new Func<string, string>(Escape));
                 blogFunctions.Import("escape_list", new Func<IEnumerable<string>, IEnumerable<string>>(EscapeList));
                 blogFunctions.Import("dt_string", new Func<DateTime, string, string>(DateTimeString));
@@ -292,16 +291,6 @@ namespace RenderBlog
                 using var hash = MD5.Create();
                 using var fs = File.OpenRead(path);
                 return Convert.ToHexStringLower(hash.ComputeHash(fs));
-            }
-
-            string FileBase64(string filename)
-            {
-                var path = FullFilePathHelper(filename);
-
-                if (!File.Exists(path))
-                    return string.Empty;
-
-                return Convert.ToBase64String(File.ReadAllBytes(path));
             }
 
             static IEnumerable<string> EscapeList(IEnumerable<string> ss) => ss.Select(Escape);
