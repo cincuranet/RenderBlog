@@ -115,8 +115,9 @@ namespace RenderBlog
             var posts = filesParsing.Where(x => x.isPost).ToList();
             var noPosts = filesParsing.Where(x => !x.isPost).ToList();
             var postsSorted = posts.OrderByDescending(x => x.pageVariables[DateKey]).ThenByDescending(x => x.localPath);
+            var htmlPages = noPosts.Where(x => Path.GetExtension(x.localPath).Equals(HtmlExtension, StringComparison.Ordinal)).OrderBy(x => x.localPath).Select(x => x.pageVariables).ToList();
             siteConfiguration.Add("posts", postsSorted.Select(x => x.pageVariables).ToList());
-            siteConfiguration.Add("html_pages", noPosts.Where(x => Path.GetExtension(x.localPath).Equals(HtmlExtension, StringComparison.Ordinal)).OrderBy(x => x.localPath).Select(x => x.pageVariables).ToList());
+            siteConfiguration.Add("html_pages", htmlPages);
             var postsWithTags = postsSorted
                 .Select(x => new
                 {
